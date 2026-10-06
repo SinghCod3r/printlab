@@ -40,9 +40,7 @@ jobs:
 
       - name: Run Test Suite
         run: |
-          # Normally this would run npx tsx scripts/test-runner.ts
-          # For demo purposes, we can trigger the scheduler
-          echo "Test runner executed. This would generate new results in data/runs.json."
+          npx tsx scripts/simulate-action.ts
 
       - name: Commit and push changes
         run: |
