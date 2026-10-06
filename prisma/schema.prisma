@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Repository {
+  id               String   @id
+  name             String
+  slug             String   @unique
+  description      String
+  url              String
+  language         String?
+  stars            Int
+  forks            Int
+  openIssues       Int
+  architectureLayer String
+  role             String
+  license          String?
+  defaultBranch    String?
+  isArchived       Boolean  @default(false)
+  latestRelease    String?
+  lastCommitDate   DateTime?
+  retrievedAt      DateTime @default(now())
+
+  issues           Issue[]
+  pullRequests     PullRequest[]
+  releases         Release[]
+}
+
+model PrinterModel {
+  id                 String   @id
+  name               String
+  manufacturer       String
+  colorSupport       Boolean
+  duplexSupport      Boolean
+  maxDpi             Int?
+  paperSizes         String?   
+  ippSupport         Boolean
+  simulatorAvailable Boolean
+  retrievedAt        DateTime @default(now())
+}
+
+model Simulator {
+  id             String   @id
+  printerModelId String
+  name           String
+  status         String
+  capabilities   String
+  repository     String
+  lastUpdate     DateTime
+}
+
+model TestSuite {
+  id                String   @id
+  name              String
+  type              String
+  description       String
+  estimatedDuration Int
+  testCases         TestCase[]
+}
+
+model TestCase {
+  id             String      @id
+  name           String
+  category       String
+  requirements   String
+  expectedResult String
+  threshold      Float
+  suites         TestSuite[]
+}
+
+model TestRun {
+  id               String       @id
+  printerModelId   String
+  simulatorId      String
+  cupsVersion      String
+  printSystemType  String
+  colorMode        String
+  duplexMode       String
+  orientation      String
+  dpi              Int
+  documentId       String
+  testSuiteId      String
+  status           String
+  startedAt        DateTime     @default(now())
+  completedAt      DateTime?
+  duration         Int?
+  totalTests       Int
+  passedTests      Int
+  failedTests      Int
+  warningTests     Int
+  currentTestIndex Int
+  results          TestResult[]
+}
+
+model TestResult {
+  id                 String   @id
+  runId              String
+  testCaseId         String
+  verdict            String
+  executionDuration  Int
+  timestamp          DateTime @default(now())
+  expectedImageUrl   String?
+  actualImageUrl     String?
+  differenceImageUrl String?
+  
+  ssim                Float?
+  psnr                Float?
+  pixelDifference     Int?
+  affectedAreaPercent Float?
+  threshold           Float?
+  logs                String?
+
+  run TestRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model Regression {
+  id                 String   @id
+  testCaseId         String
+  printerModelId     String
+  firstGoodRunId     String
+  firstBadRunId      String
+  firstGoodVersion   String
+  firstBadVersion    String
+  status             String
+  suspectedComponent String?
+  relatedRepository  String?
+  detectedAt         DateTime @default(now())
+  
+  beforeSsim         Float?
+  beforePsnr         Float?
+  afterSsim          Float?
+  afterPsnr          Float?
+}
+
+model CIPipeline {
+  id          String   @id
+  repository  String
+  commit      String
+  branch      String
+  status      String
+  totalTests  Int
+  passedTests Int
+  failedTests Int
+  duration    Int
+  triggeredAt DateTime
+  completedAt DateTime?
+}
+
+model Issue {
+  id           String     @id
+  repositoryId String
+  number       Int
+  title        String
+  state        String
+  createdAt    DateTime
+  updatedAt    DateTime
+  closedAt     DateTime?
+  author       String
+  url          String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model PullRequest {
+  id           String     @id
+  repositoryId String
+  number       Int
+  title        String
+  state        String
+  createdAt    DateTime
+  updatedAt    DateTime
+  closedAt     DateTime?
+  mergedAt     DateTime?
+  author       String
+  url          String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model Release {
+  id           String     @id
+  repositoryId String
+  name         String
+  tagName      String
+  publishedAt  DateTime
+  url          String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}

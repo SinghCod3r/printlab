@@ -4,23 +4,35 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "sync:github": "tsx scripts/sync-github.ts",
+    "sync:openprinting": "tsx scripts/seed-db.ts",
+    "test-runner": "tsx scripts/test-runner.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.52.0",
     "next": "16.3.8",
+    "node-cron": "^4.6.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
