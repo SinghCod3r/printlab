@@ -6,7 +6,7 @@ export default function LandingPage() {
     <div className="min-h-screen flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" className="h-5 w-5 object-contain" />
+          <img src="/printlab/logo.png" className="h-5 w-5 object-contain" />
           <span className="font-semibold text-sm">OpenPrinting PrintLab</span>
         </div>
         <div className="flex items-center gap-4">

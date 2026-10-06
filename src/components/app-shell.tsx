@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
-          <img src="/logo.png" className="h-5 w-5 object-contain" />
+          <img src="/printlab/logo.png" className="h-5 w-5 object-contain" />
           <Link href="/" className="font-semibold text-sm tracking-tight">
             OpenPrinting PrintLab
           </Link>
@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="border-t border-border px-4 py-3 flex items-center justify-center">
-          <img src="/logo.png" alt="PrintLab Logo" className="h-10 w-10 opacity-50 grayscale object-contain" />
+          <img src="/printlab/logo.png" alt="PrintLab Logo" className="h-10 w-10 opacity-50 grayscale object-contain" />
         </div>
       </aside>
 
