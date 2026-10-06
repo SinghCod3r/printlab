@@ -17,7 +17,27 @@ export function RunForm({ printers, simulators, cupsVersions, testSuites, docume
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert("In this statically hosted dashboard, new test runs are triggered via GitHub Actions. Manual runs from this UI are disabled.");
+    const formData = new FormData(e.currentTarget);
+    
+    // GitOps Architecture: Trigger tests via GitHub Issues to keep the site secure and serverless.
+    const body = `### New Test Run Request
+Please execute a new automated test run with the following configuration:
+
+- **Printer Model:** ${formData.get("printerModelId")}
+- **Simulator:** ${formData.get("simulatorId")}
+- **CUPS Version:** ${formData.get("cupsVersionId")}
+- **System Type:** ${formData.get("printSystemType")}
+- **Color Mode:** ${formData.get("colorMode")}
+- **Duplex Mode:** ${formData.get("duplexMode")}
+- **Orientation:** ${formData.get("orientation")}
+- **DPI:** ${formData.get("dpi")}
+- **Document:** ${formData.get("documentId")}
+- **Test Suite:** ${formData.get("testSuiteId")}
+
+*This issue was generated automatically from the PrintLab Dashboard. A GitHub Action will process this request.*`;
+
+    const url = `https://github.com/SinghCod3r/printlab/issues/new?title=Request%20Test%20Run&labels=test-run&body=${encodeURIComponent(body)}`;
+    window.open(url, "_blank");
   };
 
   return (
