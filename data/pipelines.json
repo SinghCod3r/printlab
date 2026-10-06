@@ -1,5 +1,17 @@
 [
   {
+    "id": "pipe-1791270726716",
+    "repository": "OpenPrinting/cups",
+    "commitSha": "8f70a80b",
+    "branch": "main",
+    "status": "passed",
+    "startedAt": "2026-10-06T07:12:06.716Z",
+    "completedAt": "2026-10-06T07:12:06.716Z",
+    "duration": 24,
+    "passedTests": 3,
+    "totalTests": 3
+  },
+  {
     "id": "37195378873",
     "repository": "system-config-printer",
     "commit": "0306bc21596072725bc1a75ebbf0da0bc7b60f29",
