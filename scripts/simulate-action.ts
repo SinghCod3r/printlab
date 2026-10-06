@@ -1,15 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 // Get paths
 const DATA_DIR = path.join(process.cwd(), 'data');
 const runsFile = path.join(DATA_DIR, 'runs.json');
-const resultsFile = path.join(DATA_DIR, 'results.json');
 const pipelinesFile = path.join(DATA_DIR, 'pipelines.json');
 
 // Read existing
 const runs = JSON.parse(fs.readFileSync(runsFile, 'utf-8'));
-const results = JSON.parse(fs.readFileSync(resultsFile, 'utf-8'));
 const pipelines = JSON.parse(fs.readFileSync(pipelinesFile, 'utf-8'));
 
 // Find if any run is 'queued'
@@ -31,7 +30,8 @@ if (queuedRunIndex !== -1) {
     duration: 15,
     totalTests: 3,
     passedTests: 3,
-    failedTests: 0
+    failedTests: 0,
+    results: []
   };
   runs.unshift(targetRun);
 }
@@ -40,30 +40,25 @@ if (queuedRunIndex !== -1) {
 targetRun.status = 'passed';
 targetRun.completedAt = new Date().toISOString();
 targetRun.duration = Math.floor(Math.random() * 20) + 5;
-targetRun.passedTests = targetRun.totalTests;
-targetRun.failedTests = 0;
 
 // Update or create results for this run
-const runResults = results.filter((r: any) => r.testRunId === targetRun.id);
-if (runResults.length === 0) {
+if (!targetRun.results || targetRun.results.length === 0) {
   const testCases = ["tc-basic", "tc-color", "tc-duplex"];
-  testCases.forEach((tc, idx) => {
-    results.push({
-      id: `${targetRun.id}-res-${idx}`,
-      testRunId: targetRun.id,
-      testCaseId: tc,
-      verdict: "PASS",
-      actualImageUrl: null,
-      expectedImageUrl: null,
-      differenceImageUrl: null,
-      ssim: 0.98 + (Math.random() * 0.01),
-      psnr: 35 + Math.random() * 5,
-      executionDuration: Math.floor(Math.random() * 5) + 1,
-      logs: `[GitOps Runner] Executed test ${tc}\n[Result] Verdict: PASS\nImage comparison disabled per configuration.`
-    });
-  });
+  targetRun.results = testCases.map((tc, idx) => ({
+    id: `${targetRun.id}-res-${idx}`,
+    runId: targetRun.id,
+    testCaseId: tc,
+    verdict: "PASS",
+    actualImageUrl: null,
+    expectedImageUrl: null,
+    differenceImageUrl: null,
+    ssim: 0.98 + (Math.random() * 0.01),
+    psnr: 35 + Math.random() * 5,
+    executionDuration: Math.floor(Math.random() * 5) + 1,
+    logs: `[GitOps Runner] Executed test ${tc}\n[Result] Verdict: PASS\nImage comparison disabled per configuration.`
+  }));
 } else {
-  runResults.forEach((r: any) => {
+  targetRun.results.forEach((r: any) => {
     r.verdict = "PASS";
     r.ssim = 0.98 + (Math.random() * 0.01);
     r.actualImageUrl = null;
@@ -73,11 +68,15 @@ if (runResults.length === 0) {
   });
 }
 
+targetRun.passedTests = targetRun.results.length;
+targetRun.totalTests = targetRun.results.length;
+targetRun.failedTests = 0;
+
 // Update pipeline
 const newPipeline = {
   id: `pipe-${Date.now()}`,
   repository: "OpenPrinting/cups",
-  commitSha: Math.random().toString(16).substring(2, 9),
+  commitSha: crypto.randomBytes(4).toString('hex'),
   branch: "main",
   status: "passed",
   startedAt: targetRun.startedAt,
@@ -90,7 +89,6 @@ pipelines.unshift(newPipeline);
 
 // Write back
 fs.writeFileSync(runsFile, JSON.stringify(runs, null, 2));
-fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
 fs.writeFileSync(pipelinesFile, JSON.stringify(pipelines, null, 2));
 
 console.log(`✅ GitOps simulation completed for run ${targetRun.id}`);
