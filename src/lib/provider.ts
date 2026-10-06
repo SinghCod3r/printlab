@@ -1,55 +1,79 @@
-import { TestProvider, OpenPrintingProject as Project, PrinterModel, Simulator, TestSuite, TestCase, TestRun, TestResult, Regression, CIPipeline, CUPSVersion, TestDocument, TestRunConfig, PrintSystemType, ColorMode, DuplexMode, Orientation, TestStatus, TestVerdict, RegressionStatus } from "./types";
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import crypto from "crypto";
+import prisma from './prisma';
+import { 
+  OpenPrintingProject, PrinterModel, Simulator, CUPSVersion, TestDocument, 
+  TestCase, TestSuite, TestRun, TestResult, Regression, RegressionStatus, CIPipeline, TestSuiteType, TestRunConfig,
+  PrintSystemType, ColorMode, DuplexMode, Orientation, TestStatus, TestVerdict
+} from './types';
 
-// Since we are exporting a static site, we read the JSON files directly.
-const DATA_DIR = path.join(process.cwd(), 'data');
-
-function readJson<T>(filename: string, fallback: T): T {
-  try {
-    const filePath = path.join(DATA_DIR, filename);
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
-    return fallback;
-  } catch (e) {
-    console.error(`Error reading ${filename}:`, e);
-    return fallback;
-  }
-}
-
-function writeJson(filename: string, data: any) {
-  try {
-    fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error(`Error writing ${filename}:`, e);
-  }
-}
-
-class JsonProvider implements TestProvider {
-  async getProjects(): Promise<Project[]> {
-    return readJson<any[]>('projects.json', []).map(p => ({
-      ...p,
-      architectureLayer: p.architectureLayer as any,
-      role: p.role as any
+export class DatabaseProvider {
+  async getProjects(): Promise<OpenPrintingProject[]> {
+    const repos = await prisma.repository.findMany();
+    return repos.map(r => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      description: r.description,
+      repository: r.url,
+      language: r.language ?? 'Unknown',
+      role: r.role,
+      architectureLayer: r.architectureLayer,
+      dependencies: [],
+      relatedProjectIds: [],
+      stars: r.stars,
+      openIssues: r.openIssues,
+      latestRelease: r.latestRelease ?? undefined,
+      lastCommitDate: r.lastCommitDate?.toISOString()
     }));
   }
 
-  async getProject(slug: string): Promise<Project | null> {
-    const projects = await this.getProjects();
-    return projects.find(p => p.slug === slug) ?? null;
+  async getProject(slug: string): Promise<OpenPrintingProject | null> {
+    const r = await prisma.repository.findUnique({ where: { slug } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      description: r.description,
+      repository: r.url,
+      language: r.language ?? 'Unknown',
+      role: r.role,
+      architectureLayer: r.architectureLayer,
+      dependencies: [],
+      relatedProjectIds: [],
+      stars: r.stars,
+      openIssues: r.openIssues,
+      latestRelease: r.latestRelease ?? undefined,
+      lastCommitDate: r.lastCommitDate?.toISOString()
+    };
   }
 
   async getPrinterModels(): Promise<PrinterModel[]> {
-    return readJson<PrinterModel[]>('models.json', []);
+    const models = await prisma.printerModel.findMany();
+    return models.map(m => ({
+      id: m.id,
+      name: m.name,
+      manufacturer: m.manufacturer,
+      colorSupport: m.colorSupport,
+      duplexSupport: m.duplexSupport,
+      maxDpi: m.maxDpi ?? 600,
+      paperSizes: (m.paperSizes || "").split(','),
+      ippSupport: m.ippSupport,
+      simulatorAvailable: m.simulatorAvailable,
+      isDemo: false
+    }));
   }
 
   async getSimulators(): Promise<Simulator[]> {
-    return readJson<Simulator[]>('simulators.json', []).map((s: any) => ({
-      ...s,
-      capabilities: typeof s.capabilities === 'string' ? s.capabilities.split(',') : (s.capabilities || []),
-      status: s.status as any
+    const sims = await prisma.simulator.findMany();
+    return sims.map(s => ({
+      id: s.id,
+      printerModelId: s.printerModelId,
+      name: s.name,
+      status: s.status as Simulator["status"],
+      capabilities: s.capabilities.split(','),
+      repository: s.repository,
+      lastUpdate: s.lastUpdate.toISOString()
     }));
   }
 
@@ -81,50 +105,51 @@ class JsonProvider implements TestProvider {
   }
 
   async getTestCases(): Promise<TestCase[]> {
-    const cases = readJson<any[]>('cases.json', []);
+    const cases = await prisma.testCase.findMany();
     return cases.map(c => ({
       id: c.id,
       name: c.name,
-      category: c.category as any,
-      requirements: Array.isArray(c.requirements) ? c.requirements : (c.requirements?.split(',') ?? []),
+      category: c.category,
+      requirements: c.requirements.split(','),
       expectedResult: c.expectedResult,
       threshold: c.threshold,
-      suites: []
+      suites: [] as TestSuiteType[]
     }));
   }
 
   async getTestSuites(): Promise<TestSuite[]> {
-    const suites = readJson<any[]>('suites.json', []);
+    const suites = await prisma.testSuite.findMany({ include: { testCases: true } });
     return suites.map(s => ({
       id: s.id,
       name: s.name,
-      type: s.type as any,
+      type: s.type as TestSuite["type"],
       description: s.description,
       estimatedDuration: s.estimatedDuration,
-      testCaseIds: (s.testCases || []).map((tc: any) => tc.id)
+      testCaseIds: s.testCases.map(c => c.id)
     }));
   }
 
   async getTestRuns(): Promise<TestRun[]> {
-    const runs = readJson<any[]>('runs.json', []);
-    runs.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    const runs = await prisma.testRun.findMany({
+      orderBy: { startedAt: 'desc' }
+    });
     return runs.map(r => ({
       id: r.id,
       config: {
-        printerModelId: r.printerModelId || r.config?.printerModelId,
-        simulatorId: r.simulatorId || r.config?.simulatorId,
-        cupsVersionId: r.cupsVersion || r.config?.cupsVersionId,
-        printSystemType: (r.printSystemType || r.config?.printSystemType) as PrintSystemType,
-        colorMode: (r.colorMode || r.config?.colorMode) as ColorMode,
-        duplexMode: (r.duplexMode || r.config?.duplexMode) as DuplexMode,
-        orientation: (r.orientation || r.config?.orientation) as Orientation,
-        dpi: r.dpi || r.config?.dpi,
-        testSuiteId: r.testSuiteId || r.config?.testSuiteId,
-        documentId: r.documentId || r.config?.documentId
+        printerModelId: r.printerModelId,
+        simulatorId: r.simulatorId,
+        cupsVersionId: r.cupsVersion,
+        printSystemType: r.printSystemType as PrintSystemType,
+        colorMode: r.colorMode as ColorMode,
+        duplexMode: r.duplexMode as DuplexMode,
+        orientation: r.orientation as Orientation,
+        dpi: r.dpi,
+        testSuiteId: r.testSuiteId,
+        documentId: r.documentId
       },
       status: r.status as TestStatus,
-      startedAt: r.startedAt,
-      completedAt: r.completedAt ?? null,
+      startedAt: r.startedAt.toISOString(),
+      completedAt: r.completedAt?.toISOString() ?? null,
       duration: r.duration,
       totalTests: r.totalTests,
       passedTests: r.passedTests,
@@ -136,21 +161,43 @@ class JsonProvider implements TestProvider {
   }
 
   async getTestRun(id: string): Promise<TestRun | null> {
-    const runs = await this.getTestRuns();
-    return runs.find(r => r.id === id) ?? null;
+    const r = await prisma.testRun.findUnique({ where: { id } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      config: {
+        printerModelId: r.printerModelId,
+        simulatorId: r.simulatorId,
+        cupsVersionId: r.cupsVersion,
+        printSystemType: r.printSystemType as PrintSystemType,
+        colorMode: r.colorMode as ColorMode,
+        duplexMode: r.duplexMode as DuplexMode,
+        orientation: r.orientation as Orientation,
+        dpi: r.dpi,
+        testSuiteId: r.testSuiteId,
+        documentId: r.documentId
+      },
+      status: r.status as TestStatus,
+      startedAt: r.startedAt.toISOString(),
+      completedAt: r.completedAt?.toISOString() ?? null,
+      duration: r.duration,
+      totalTests: r.totalTests,
+      passedTests: r.passedTests,
+      failedTests: r.failedTests,
+      warningTests: r.warningTests,
+      currentTestIndex: r.currentTestIndex,
+      isDemo: false
+    };
   }
 
   async getTestResults(runId: string): Promise<TestResult[]> {
-    const runs = readJson<any[]>('runs.json', []);
-    const run = runs.find(r => r.id === runId);
-    if (!run || !run.results) return [];
-    
-    return run.results.map((r: any) => ({
+    const results = await prisma.testResult.findMany({ where: { runId } });
+    return results.map(r => ({
       id: r.id,
       runId: r.runId,
       testCaseId: r.testCaseId,
       verdict: r.verdict as TestVerdict,
-      metrics: r.ssim !== null && r.ssim !== undefined ? {
+      metrics: r.ssim !== null ? {
         ssim: r.ssim,
         psnr: r.psnr ?? 0,
         pixelDifference: r.pixelDifference ?? 0,
@@ -158,7 +205,7 @@ class JsonProvider implements TestProvider {
         threshold: r.threshold ?? 0.95
       } : null,
       executionDuration: r.executionDuration,
-      timestamp: r.timestamp,
+      timestamp: r.timestamp.toISOString(),
       expectedImageUrl: r.expectedImageUrl ?? '',
       actualImageUrl: r.actualImageUrl ?? '',
       differenceImageUrl: r.differenceImageUrl ?? '',
@@ -173,7 +220,7 @@ class JsonProvider implements TestProvider {
   }
 
   async getRegressions(): Promise<Regression[]> {
-    const regs = readJson<any[]>('regressions.json', []);
+    const regs = await prisma.regression.findMany();
     return regs.map(r => ({
       id: r.id,
       testCaseId: r.testCaseId,
@@ -201,83 +248,78 @@ class JsonProvider implements TestProvider {
       },
       suspectedComponent: r.suspectedComponent ?? '',
       relatedRepository: r.relatedRepository ?? '',
-      detectedAt: r.detectedAt,
+      detectedAt: r.detectedAt.toISOString(),
       isDemo: false
     }));
   }
 
   async getCIPipelinesCount(search?: string): Promise<number> {
-    const pipelines = await this.getCIPipelines(1, 10000, search);
-    return pipelines.length;
+    const where = search ? { repository: { contains: search } } : {};
+    return await prisma.cIPipeline.count({ where });
   }
 
   async getCIPipelines(page: number = 1, limit: number = 20, search?: string): Promise<CIPipeline[]> {
-    let pipelines = readJson<any[]>('pipelines.json', []);
-    if (search) {
-      pipelines = pipelines.filter(p => p.repository.toLowerCase().includes(search.toLowerCase()));
-    }
-    pipelines.sort((a, b) => new Date(b.triggeredAt).getTime() - new Date(a.triggeredAt).getTime());
-    
-    const start = (page - 1) * limit;
-    return pipelines.slice(start, start + limit).map(p => ({
+    const where = search ? { repository: { contains: search } } : {};
+    const pipelines = await prisma.cIPipeline.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { triggeredAt: 'desc' }
+    });
+    return pipelines.map(p => ({
       ...p,
       status: p.status as CIPipeline["status"],
-      completedAt: p.completedAt ?? null,
+      triggeredAt: p.triggeredAt.toISOString(),
+      completedAt: p.completedAt?.toISOString() ?? null,
       isDemo: false
     }));
   }
 
   async createTestRun(config: TestRunConfig): Promise<TestRun> {
     const id = `RUN-${Date.now()}`;
-    const suites = readJson<any[]>('suites.json', []);
-    const suite = suites.find(s => s.id === config.testSuiteId);
+    const suite = await prisma.testSuite.findUnique({
+      where: { id: config.testSuiteId },
+      include: { testCases: true }
+    });
     
-    const newRun = {
-      id,
-      printerModelId: config.printerModelId,
-      simulatorId: config.simulatorId,
-      cupsVersion: config.cupsVersionId,
-      printSystemType: config.printSystemType,
-      colorMode: config.colorMode,
-      duplexMode: config.duplexMode,
-      orientation: config.orientation,
-      dpi: config.dpi,
-      documentId: config.documentId,
-      testSuiteId: config.testSuiteId,
-      status: "queued",
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      totalTests: suite && suite.testCases ? suite.testCases.length : 0,
-      passedTests: 0,
-      failedTests: 0,
-      warningTests: 0,
-      currentTestIndex: 0,
-      results: [] as any[]
-    };
+    await prisma.testRun.create({
+      data: {
+        id,
+        printerModelId: config.printerModelId,
+        simulatorId: config.simulatorId,
+        cupsVersion: config.cupsVersionId,
+        printSystemType: config.printSystemType,
+        colorMode: config.colorMode,
+        duplexMode: config.duplexMode,
+        orientation: config.orientation,
+        dpi: config.dpi,
+        documentId: config.documentId,
+        testSuiteId: config.testSuiteId,
+        status: "queued",
+        totalTests: suite ? suite.testCases.length : 0,
+        passedTests: 0,
+        failedTests: 0,
+        warningTests: 0,
+        currentTestIndex: 0
+      }
+    });
 
-    if (suite && suite.testCases) {
-      newRun.results = suite.testCases.map((tc: any) => ({
-        id: crypto.randomUUID(),
-        runId: id,
-        testCaseId: tc.id,
-        verdict: 'PENDING',
-        executionDuration: 0,
-        threshold: tc.threshold,
-        timestamp: new Date().toISOString()
-      }));
-    }
-
-    if (process.env.NODE_ENV !== 'production') {
-      const allRuns = readJson<any[]>('runs.json', []);
-      allRuns.push(newRun);
-      writeJson('runs.json', allRuns);
-    } else {
-      console.warn("createTestRun called in production. Data will not persist to runs.json statically.");
+    if (suite && suite.testCases.length > 0) {
+      await prisma.testResult.createMany({
+        data: suite.testCases.map((tc: { id: string; threshold: number }) => ({
+          id: crypto.randomUUID(),
+          runId: id,
+          testCaseId: tc.id,
+          verdict: 'PENDING',
+          executionDuration: 0,
+          threshold: tc.threshold
+        }))
+      });
     }
 
     return (await this.getTestRun(id))!;
   }
 }
 
-const provider = new JsonProvider();
+const provider = new DatabaseProvider();
 export default provider;

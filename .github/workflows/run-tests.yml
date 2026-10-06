@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 0 * * *' # Run daily at midnight
   workflow_dispatch:
+    inputs:
+      runId:
+        description: 'Test Run ID to execute'
+        required: false
+        type: string
   issues:
     types: [opened]
 
@@ -40,37 +45,8 @@ jobs:
         run: pip install pillow opencv-python scikit-image numpy
 
       - name: Run Test Suite
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           npx tsx scripts/simulate-action.ts
-
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
-          # Only commit if there are changes
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: update automated test data"
-            git push
-          else
-            echo "No changes to commit"
-          fi
-
-      - name: Close Issue (if triggered via issue)
-        if: github.event_name == 'issues'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ The requested test run has been executed and the results have been deployed to the dashboard.'
-            })
-            github.rest.issues.update({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed'
-            })
 

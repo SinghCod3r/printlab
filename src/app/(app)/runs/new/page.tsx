@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui";
 import provider from "@/lib/provider";
 import { RunForm } from "./run-form";
 
+export const dynamic = "force-dynamic";
 
 export default async function NewTestRunPage() {
   const [printers, simulators, cupsVersions, testSuites, documents] = await Promise.all([

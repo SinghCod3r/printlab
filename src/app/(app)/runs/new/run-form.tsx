@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useActionState } from "react";
 import { PrinterModel, CUPSVersion, TestSuite, TestDocument, Simulator } from "@/lib/types";
 import { Card } from "@/components/ui";
+import { submitTestRun } from "@/app/actions/test-run";
 
 interface RunFormProps {
   printers: PrinterModel[];
@@ -12,36 +13,24 @@ interface RunFormProps {
   documents: TestDocument[];
 }
 
-export function RunForm({ printers, simulators, cupsVersions, testSuites, documents }: RunFormProps) {
-  const [isPending, startTransition] = useTransition();
+import { useFormStatus } from "react-dom";
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    // GitOps Architecture: Trigger tests via GitHub Issues to keep the site secure and serverless.
-    const body = `### New Test Run Request
-Please execute a new automated test run with the following configuration:
-
-- **Printer Model:** ${formData.get("printerModelId")}
-- **Simulator:** ${formData.get("simulatorId")}
-- **CUPS Version:** ${formData.get("cupsVersionId")}
-- **System Type:** ${formData.get("printSystemType")}
-- **Color Mode:** ${formData.get("colorMode")}
-- **Duplex Mode:** ${formData.get("duplexMode")}
-- **Orientation:** ${formData.get("orientation")}
-- **DPI:** ${formData.get("dpi")}
-- **Document:** ${formData.get("documentId")}
-- **Test Suite:** ${formData.get("testSuiteId")}
-
-*This issue was generated automatically from the PrintLab Dashboard. A GitHub Action will process this request.*`;
-
-    const url = `https://github.com/SinghCod3r/printlab/issues/new?title=Request%20Test%20Run&labels=test-run&body=${encodeURIComponent(body)}`;
-    window.open(url, "_blank");
-  };
-
+function SubmitButton() {
+  const { pending } = useFormStatus();
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <button
+      type="submit"
+      disabled={pending}
+      className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md shadow-sm hover:bg-primary/90 disabled:opacity-50"
+    >
+      {pending ? "Starting Run..." : "Start Test Run"}
+    </button>
+  );
+}
+
+export function RunForm({ printers, simulators, cupsVersions, testSuites, documents }: RunFormProps) {
+  return (
+    <form action={submitTestRun} className="space-y-6">
       <Card className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Printer & Simulator</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -174,13 +163,7 @@ Please execute a new automated test run with the following configuration:
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md shadow-sm hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isPending ? "Starting Run..." : "Start Test Run"}
-        </button>
+        <SubmitButton />
       </div>
     </form>
   );
