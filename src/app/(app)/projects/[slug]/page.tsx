@@ -8,6 +8,13 @@ interface ProjectPageProps {
   params: Promise<{ slug: string }>
 }
 
+export async function generateStaticParams() {
+  const projects = await provider.getProjects()
+  return projects.map((project) => ({
+    slug: project.slug,
+  }))
+}
+
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;

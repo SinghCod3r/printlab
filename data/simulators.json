@@ -1,0 +1,11 @@
+[
+  {
+    "id": "sim-ippeveprinter",
+    "printerModelId": "generic-ipp-everywhere",
+    "name": "IPP Everywhere Simulator",
+    "status": "online",
+    "capabilities": "ipp,color,duplex",
+    "repository": "https://github.com/OpenPrinting/cups",
+    "lastUpdate": "2026-10-06T05:20:09.249Z"
+  }
+]

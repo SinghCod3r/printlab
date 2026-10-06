@@ -4,43 +4,19 @@ import { CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, ExternalLink, 
 import { CIPipeline } from "@/lib/types"
 import Link from "next/link"
 
-export default async function CIPage({ searchParams }: { searchParams: Promise<{ page?: string, q?: string }> }) {
-  const resolvedParams = await searchParams;
-  const page = parseInt(resolvedParams.page || "1", 10);
-  const q = resolvedParams.q || "";
-  const pageSize = 15;
+export default async function CIPage() {
+  const pageSize = 100; // Just load the top 100 for static dashboard
   
-  const totalCount = await provider.getCIPipelinesCount(q);
-  const pipelines = await provider.getCIPipelines(page, pageSize, q);
-  
-  const totalPages = Math.ceil(totalCount / pageSize) || 1;
-  const hasNext = page < totalPages;
-  const hasPrev = page > 1;
-
-  const startPage = Math.max(1, page - 2);
-  const endPage = Math.min(totalPages, Math.max(startPage + 4, 5));
-  const normalizedStart = Math.max(1, Math.min(startPage, endPage - 4));
-  
-  const pages = Array.from({ length: endPage - normalizedStart + 1 }, (_, i) => normalizedStart + i).filter(p => p <= totalPages);
+  const pipelines = await provider.getCIPipelines(1, pageSize);
 
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex justify-between items-start">
         <PageHeader title="CI Pipelines" description="Continuous Integration runs from OpenPrinting GitHub repositories." />
-        <form action="/ci" method="GET" className="relative mt-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder="Search repositories..."
-            className="pl-9 pr-4 py-2 border rounded-md text-sm w-64 bg-background"
-          />
-        </form>
       </div>
       <div className="flex flex-col gap-4">
         {pipelines.length === 0 ? (
-           <EmptyState title="No Pipelines Found" description={q ? `No pipeline found matching "${q}".` : "Could not find any CI pipeline data."} />
+           <EmptyState title="No Pipelines Found" description={"Could not find any CI pipeline data."} />
         ) : (
           pipelines.map((pipeline: CIPipeline) => {
             const url = `https://github.com/OpenPrinting/${pipeline.repository}/actions/runs/${pipeline.id}`;
@@ -77,24 +53,6 @@ export default async function CIPage({ searchParams }: { searchParams: Promise<{
           })
         )}
       </div>
-      
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-6 gap-2">
-          <Link href={`/ci?page=${page - 1}${q ? `&q=${q}` : ''}`} className={`flex items-center justify-center p-2 rounded-md border ${!hasPrev ? 'pointer-events-none opacity-50 bg-muted' : 'hover:bg-muted bg-background'}`}>
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-          
-          {pages.map(p => (
-            <Link key={p} href={`/ci?page=${p}${q ? `&q=${q}` : ''}`} className={`flex items-center justify-center h-9 w-9 rounded-md border text-sm font-medium ${p === page ? 'bg-blue-600 text-white pointer-events-none border-blue-600' : 'hover:bg-muted bg-background'}`}>
-              {p}
-            </Link>
-          ))}
-
-          <Link href={`/ci?page=${page + 1}${q ? `&q=${q}` : ''}`} className={`flex items-center justify-center p-2 rounded-md border ${!hasNext ? 'pointer-events-none opacity-50 bg-muted' : 'hover:bg-muted bg-background'}`}>
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
-      )}
     </div>
   )
 }

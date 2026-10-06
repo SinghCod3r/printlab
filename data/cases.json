@@ -1,0 +1,26 @@
+[
+  {
+    "id": "tc-basic-print",
+    "name": "Basic Print",
+    "category": "basic",
+    "requirements": "printer",
+    "expectedResult": "Clean output",
+    "threshold": 0.95
+  },
+  {
+    "id": "tc-color",
+    "name": "Color Accuracy",
+    "category": "color",
+    "requirements": "color",
+    "expectedResult": "Delta E < 3.0",
+    "threshold": 0.9
+  },
+  {
+    "id": "tc-duplex",
+    "name": "Duplex Printing",
+    "category": "duplex",
+    "requirements": "duplex",
+    "expectedResult": "Correct binding",
+    "threshold": 0.95
+  }
+]

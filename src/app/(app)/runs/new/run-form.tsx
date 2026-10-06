@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import { PrinterModel, CUPSVersion, TestSuite, TestDocument, Simulator } from "@/lib/types";
-import { createTestRunAction } from "./actions";
 import { Card } from "@/components/ui";
 
 interface RunFormProps {
@@ -18,10 +17,7 @@ export function RunForm({ printers, simulators, cupsVersions, testSuites, docume
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    startTransition(() => {
-      createTestRunAction(formData);
-    });
+    alert("In this statically hosted dashboard, new test runs are triggered via GitHub Actions. Manual runs from this UI are disabled.");
   };
 
   return (

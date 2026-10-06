@@ -2,7 +2,12 @@ import { Suspense } from "react";
 import RunDetailsClient from "./RunDetailsClient";
 import provider from "@/lib/provider";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() {
+  const runs = await provider.getTestRuns()
+  return runs.map((run) => ({
+    id: run.id,
+  }))
+}
 
 export default async function RunDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;

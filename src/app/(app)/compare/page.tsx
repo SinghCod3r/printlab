@@ -1,22 +1,18 @@
-export const dynamic = 'force-dynamic';
 
 import provider from "@/lib/provider"
 import { TestRun, TestResult } from "@/lib/types"
 import { PageHeader, Card, EmptyState } from "@/components/ui"
 import Link from "next/link"
 
-export default async function ComparePage({ searchParams }: { searchParams: Promise<{ runA?: string, runB?: string }> }) {
-  const resolvedParams = await searchParams;
-  let runIdA = resolvedParams.runA;
-  let runIdB = resolvedParams.runB;
+export default async function ComparePage() {
+  let runIdA: string | undefined;
+  let runIdB: string | undefined;
 
-  if (!runIdA || !runIdB) {
-    const recentRuns = await provider.getTestRuns();
-    const completedRuns = recentRuns.filter(r => r.status === 'passed' || r.status === 'failed');
-    if (completedRuns.length >= 2) {
-      runIdB = completedRuns[0].id; // newer
-      runIdA = completedRuns[1].id; // older
-    }
+  const recentRuns = await provider.getTestRuns();
+  const completedRuns = recentRuns.filter(r => r.status === 'passed' || r.status === 'failed' || r.status === 'completed');
+  if (completedRuns.length >= 2) {
+    runIdB = completedRuns[0].id; // newer
+    runIdA = completedRuns[1].id; // older
   }
 
   if (!runIdA || !runIdB) {

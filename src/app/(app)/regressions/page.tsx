@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 
 import provider from "@/lib/provider"
 import { PageHeader, Card, Badge } from "@/components/ui"

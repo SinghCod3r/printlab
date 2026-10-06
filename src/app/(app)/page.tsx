@@ -4,7 +4,6 @@ import { formatDuration, formatDate, passRate, verdictBg, statusBg } from "@/lib
 import Link from "next/link";
 import { ArrowRight, XCircle } from "lucide-react";
 
-export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const runs = await provider.getTestRuns();

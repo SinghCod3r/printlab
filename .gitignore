@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+venv/
+.foomatic-db-temp/
+public/uploads/
+public/demo-images/
+prisma/*.db
+prisma/*.db-journal

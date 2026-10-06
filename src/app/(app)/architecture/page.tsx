@@ -3,7 +3,6 @@ import { PageHeader, Card, Badge } from "@/components/ui";
 import { ArrowDown, Cpu, Layers, Monitor, Network, Printer, Server, Settings, Webhook } from "lucide-react";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
 
 export default async function ArchitecturePage() {
   const projects = await provider.getProjects();

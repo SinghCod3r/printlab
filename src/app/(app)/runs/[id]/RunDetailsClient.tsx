@@ -14,23 +14,9 @@ export default function RunDetailsClient({ initialRun, initialResults, runId }: 
   const isRunning = run.status === "queued" || run.status === "preparing" || run.status === "running";
 
   useEffect(() => {
-    if (!isRunning) return;
-    
-    const interval = setInterval(async () => {
-      try {
-        const runRes = await fetch(`/api/runs/${runId}`);
-        if (runRes.ok) {
-          const data = await runRes.json();
-          setRun(data.run);
-          setResults(data.results);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }, 1000); // Polling faster for real-time logs
-
-    return () => clearInterval(interval);
-  }, [isRunning, runId]);
+    // In static export mode, real-time polling is disabled.
+    // Data updates will happen via GitHub Actions static site redeployments.
+  }, []);
 
   const passed = results.filter((r) => r.verdict?.toLowerCase() === "pass").length;
   const failed = results.filter((r) => r.verdict?.toLowerCase() === "fail").length;
