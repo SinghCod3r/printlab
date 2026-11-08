@@ -1,5 +1,58 @@
 [
   {
+    "id": "PR-2026-0962",
+    "printerModelId": "hp-color-laserjet-pro-m254dw",
+    "cupsVersionId": "cups-3.0.0b1",
+    "status": "passed",
+    "startedAt": "2026-11-08T04:29:14.623Z",
+    "completedAt": "2026-11-08T04:29:14.623Z",
+    "duration": 8,
+    "totalTests": 3,
+    "passedTests": 3,
+    "failedTests": 0,
+    "results": [
+      {
+        "id": "PR-2026-0962-res-0",
+        "runId": "PR-2026-0962",
+        "testCaseId": "tc-basic",
+        "verdict": "PASS",
+        "actualImageUrl": null,
+        "expectedImageUrl": null,
+        "differenceImageUrl": null,
+        "ssim": 0.9837567654637767,
+        "psnr": 39.20826526268609,
+        "executionDuration": 5,
+        "logs": "[GitOps Runner] Executed test tc-basic\n[Result] Verdict: PASS\nImage comparison disabled per configuration."
+      },
+      {
+        "id": "PR-2026-0962-res-1",
+        "runId": "PR-2026-0962",
+        "testCaseId": "tc-color",
+        "verdict": "PASS",
+        "actualImageUrl": null,
+        "expectedImageUrl": null,
+        "differenceImageUrl": null,
+        "ssim": 0.985258521580649,
+        "psnr": 38.07411064546594,
+        "executionDuration": 5,
+        "logs": "[GitOps Runner] Executed test tc-color\n[Result] Verdict: PASS\nImage comparison disabled per configuration."
+      },
+      {
+        "id": "PR-2026-0962-res-2",
+        "runId": "PR-2026-0962",
+        "testCaseId": "tc-duplex",
+        "verdict": "PASS",
+        "actualImageUrl": null,
+        "expectedImageUrl": null,
+        "differenceImageUrl": null,
+        "ssim": 0.9881080004181345,
+        "psnr": 36.91678838994439,
+        "executionDuration": 2,
+        "logs": "[GitOps Runner] Executed test tc-duplex\n[Result] Verdict: PASS\nImage comparison disabled per configuration."
+      }
+    ]
+  },
+  {
     "id": "PR-2026-7672",
     "printerModelId": "hp-color-laserjet-pro-m254dw",
     "cupsVersionId": "cups-3.0.0b1",
