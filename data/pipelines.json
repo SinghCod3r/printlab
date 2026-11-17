@@ -1,5 +1,17 @@
 [
   {
+    "id": "pipe-1794897294966",
+    "repository": "OpenPrinting/cups",
+    "commitSha": "a1e51e86",
+    "branch": "main",
+    "status": "passed",
+    "startedAt": "2026-11-17T06:34:54.965Z",
+    "completedAt": "2026-11-17T06:34:54.966Z",
+    "duration": 10,
+    "passedTests": 3,
+    "totalTests": 3
+  },
+  {
     "id": "pipe-1794804415522",
     "repository": "OpenPrinting/cups",
     "commitSha": "23c26189",
